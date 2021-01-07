@@ -272,7 +272,7 @@ export class SNSServer implements ISNSServer {
             .catch((ex) => this.debug(ex));
     }
 
-    private publishSqs(event, sub, messageAttributes: MessageAttributes, sqsFifoAttributes: ISQSFifoAttributes) {
+    private publishSqs(event, sub, messageAttributes, sqsFifoAttributes: ISQSFifoAttributes) {
         console.log("🔥 publishSqs", { sqsFifoAttributes });
 
         const subEndpointUrl = new URL(sub.Endpoint);
@@ -316,7 +316,7 @@ export class SNSServer implements ISNSServer {
         }
     }
 
-    public publish(topicArn, subject, message, messageStructure, messageAttributes: MessageAttributes, sqsFifoAttributes?: ISQSFifoAttributes) {
+    public publish(topicArn, subject, message, messageStructure, messageAttributes, sqsFifoAttributes?: ISQSFifoAttributes) {
         const messageId = createMessageId();
         Promise.all(
             this.subscriptions
