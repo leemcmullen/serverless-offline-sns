@@ -28,6 +28,8 @@ class ServerlessOfflineSns {
     private accountId: string;
 
     constructor(serverless: any, options: any) {
+        console.log("🔥 ServerlessOfflineSns constructor");
+
         this.app = express();
         this.app.use(cors());
         this.app.use((req, res, next) => {
@@ -42,21 +44,13 @@ class ServerlessOfflineSns {
         this.commands = {
             "offline-sns": {
                 usage: "Listens to offline SNS events and passes them to configured Lambda fns",
-                lifecycleEvents: [
-                    "start",
-                    "cleanup",
-                ],
+                lifecycleEvents: ["start", "cleanup"],
                 commands: {
                     start: {
-                        lifecycleEvents: [
-                            "init",
-                            "end",
-                        ],
+                        lifecycleEvents: ["init", "end"],
                     },
                     cleanup: {
-                        lifecycleEvents: [
-                            "init",
-                        ],
+                        lifecycleEvents: ["init"],
                     },
                 },
             },
@@ -115,7 +109,7 @@ class ServerlessOfflineSns {
     }
 
     public async waitForSigint() {
-        return new Promise(res => {
+        return new Promise((res) => {
             process.on("SIGINT", () => {
                 this.log("Halting offline-sns server");
                 res();
@@ -131,22 +125,28 @@ class ServerlessOfflineSns {
         this.setupSnsAdapter();
         await this.unsubscribeAll();
         this.debug("subscribing");
-        await Promise.all(Object.keys(this.serverless.service.functions).map(fnName => {
-            const fn = this.serverless.service.functions[fnName];
-            return Promise.all(fn.events.filter(event => event.sns != null).map(event => {
-                return this.subscribe(fnName, event.sns);
-            }));
-        }));
+        await Promise.all(
+            Object.keys(this.serverless.service.functions).map((fnName) => {
+                const fn = this.serverless.service.functions[fnName];
+                return Promise.all(
+                    fn.events
+                        .filter((event) => event.sns != null)
+                        .map((event) => {
+                            return this.subscribe(fnName, event.sns);
+                        }),
+                );
+            }),
+        );
     }
 
     public async unsubscribeAll() {
         const subs = await this.snsAdapter.listSubscriptions();
         this.debug("subs!: " + JSON.stringify(subs));
         await Promise.all(
-            subs.Subscriptions
-                .filter(sub => sub.Endpoint.indexOf(":" + this.remotePort) > -1)
-                .filter(sub => sub.SubscriptionArn !== "PendingConfirmation")
-                .map(sub => this.snsAdapter.unsubscribe(sub.SubscriptionArn)));
+            subs.Subscriptions.filter((sub) => sub.Endpoint.indexOf(":" + this.remotePort) > -1)
+                .filter((sub) => sub.SubscriptionArn !== "PendingConfirmation")
+                .map((sub) => this.snsAdapter.unsubscribe(sub.SubscriptionArn)),
+        );
     }
 
     public async subscribe(fnName, snsConfig) {
@@ -155,7 +155,7 @@ class ServerlessOfflineSns {
         if (!fn.runtime) {
             fn.runtime = this.serverless.service.provider.runtime;
         }
-        
+
         let topicName = "";
 
         // https://serverless.com/framework/docs/providers/aws/events/sns#using-a-pre-existing-topic
@@ -173,7 +173,9 @@ class ServerlessOfflineSns {
 
         if (!topicName) {
             this.log(`Unable to create topic for "${fnName}". Please ensure the sns configuration is correct.`);
-            return Promise.resolve(`Unable to create topic for "${fnName}". Please ensure the sns configuration is correct.`);
+            return Promise.resolve(
+                `Unable to create topic for "${fnName}". Please ensure the sns configuration is correct.`,
+            );
         }
 
         this.log(`Creating topic: "${topicName}" for fn "${fnName}"`);
@@ -227,13 +229,13 @@ class ServerlessOfflineSns {
                 }
             });
 
-            process.stderr.on("data", data => {
+            process.stderr.on("data", (data) => {
                 error = true;
                 console.warn("error", data);
                 context.fail(data);
             });
 
-            process.on("close", code => {
+            process.on("close", (code) => {
                 if (!error) {
                     // try to parse to json
                     // valid result should be a json array | object
@@ -295,15 +297,16 @@ class ServerlessOfflineSns {
             // ### OLD: use the main serverless config since this behavior is already supported there
             if (!this.options.skipCacheInvalidation || Array.isArray(this.options.skipCacheInvalidation)) {
                 for (const key in require.cache) {
-
                     // don't invalidate cached modules from node_modules ...
                     if (key.match(/node_modules/)) {
                         continue;
                     }
 
                     // if an array is provided to the serverless config, check the entries there too
-                    if (Array.isArray(this.options.skipCacheInvalidation) &&
-                        this.options.skipCacheInvalidation.find(pattern => new RegExp(pattern).test(key))) {
+                    if (
+                        Array.isArray(this.options.skipCacheInvalidation) &&
+                        this.options.skipCacheInvalidation.find((pattern) => new RegExp(pattern).test(key))
+                    ) {
                         continue;
                     }
 
@@ -346,7 +349,7 @@ class ServerlessOfflineSns {
             this.debug(`using offline specified host ${this.options.host}`);
             host = this.options.host;
         }
-        return new Promise(res => {
+        return new Promise((res) => {
             this.server = this.app.listen(this.localPort, host, () => {
                 this.debug(`listening on ${host}:${this.localPort}`);
                 res();
