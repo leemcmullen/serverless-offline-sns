@@ -131,6 +131,8 @@ export const topicNameFromArn = (arn) => {
 export const topicArnFromName = (name, region, accountId) => `arn:aws:sns:${region}:${accountId}:${name}`;
 
 export const formatMessageAttributes = (messageAttributes: MessageAttributes) => {
+    console.log("🔥 formatMessageAttributes", { messageAttributes });
+
     const newMessageAttributes = {};
     for (const [key, value] of Object.entries(messageAttributes)) {
         newMessageAttributes[key] = {
