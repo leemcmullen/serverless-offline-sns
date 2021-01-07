@@ -72,8 +72,8 @@ export class SNSServer implements ISNSServer {
                 }
 
                 const sqsFifoAttributes = _.pick(req.body, [
-                    nameof<SQSFifoAttributes>("MessageGroupId"),
-                    nameof<SQSFifoAttributes>("MessageDeduplicationId"),
+                    nameof<ISQSFifoAttributes>("MessageGroupId"),
+                    nameof<ISQSFifoAttributes>("MessageDeduplicationId"),
                 ]);
                 console.log("🔥", { sqsFifoAttributes });
 
@@ -271,7 +271,7 @@ export class SNSServer implements ISNSServer {
             .catch((ex) => this.debug(ex));
     }
 
-    private publishSqs(event, sub, sqsFifoAttributes: SQSFifoAttributes) {
+    private publishSqs(event, sub, sqsFifoAttributes: ISQSFifoAttributes) {
         console.log("🔥 publishSqs", { sqsFifoAttributes });
 
         const subEndpointUrl = new URL(sub.Endpoint);
@@ -309,7 +309,7 @@ export class SNSServer implements ISNSServer {
         }
     }
 
-    public publish(topicArn, subject, message, messageStructure, messageAttributes, sqsFifoAttributes?: SQSFifoAttributes) {
+    public publish(topicArn, subject, message, messageStructure, messageAttributes, sqsFifoAttributes?: ISQSFifoAttributes) {
         const messageId = createMessageId();
         Promise.all(
             this.subscriptions
@@ -385,7 +385,7 @@ export class SNSServer implements ISNSServer {
     }
 }
 
-interface SQSFifoAttributes {
+interface ISQSFifoAttributes {
     MessageGroupId: string;
     MessageDeduplicationId: string;
 }
