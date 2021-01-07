@@ -1,4 +1,5 @@
 import { v4 as uuid } from "uuid";
+import { MessageAttributes } from "./types";
 
 export function createAttr() {
     return {
@@ -90,15 +91,7 @@ export function createSnsLambdaEvent(topicArn, subscriptionArn, subject, message
     };
 }
 
-export function createSnsTopicEvent(
-    topicArn,
-    subscriptionArn,
-    subject,
-    message,
-    messageId,
-    messageStructure,
-    messageAttributes?,
-) {
+export function createSnsTopicEvent(topicArn, subscriptionArn, subject, message, messageId, messageStructure, messageAttributes?) {
     return {
         SignatureVersion: "1",
         Timestamp: new Date().toISOString(),
@@ -136,5 +129,16 @@ export const topicNameFromArn = (arn) => {
 };
 
 export const topicArnFromName = (name, region, accountId) => `arn:aws:sns:${region}:${accountId}:${name}`;
+
+export const formatMessageAttributes = (messageAttributes: MessageAttributes) => {
+    const newMessageAttributes = {};
+    for (const [key, value] of Object.entries(messageAttributes)) {
+        newMessageAttributes[key] = {
+            DataType: value.Type,
+            StringValue: value.Value,
+        };
+    }
+    return newMessageAttributes;
+};
 
 export const nameof = <T>(name: keyof T) => name;

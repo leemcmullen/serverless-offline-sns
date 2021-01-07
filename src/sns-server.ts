@@ -2,7 +2,7 @@ import { SQS } from "aws-sdk";
 import { TopicsList, Subscription } from "aws-sdk/clients/sns";
 import fetch from "node-fetch";
 import { URL } from "url";
-import { IDebug, ISNSServer } from "./types";
+import { IDebug, ISNSServer, ISQSFifoAttributes, MessageAttributes } from "./types";
 import * as bodyParser from "body-parser";
 import * as _ from "lodash";
 import * as xml from "xml";
@@ -17,6 +17,7 @@ import {
     parseAttributes,
     topicArnFromName,
     validatePhoneNumber,
+    formatMessageAttributes,
 } from "./helpers";
 
 export class SNSServer implements ISNSServer {
@@ -271,7 +272,7 @@ export class SNSServer implements ISNSServer {
             .catch((ex) => this.debug(ex));
     }
 
-    private publishSqs(event, sub, sqsFifoAttributes: ISQSFifoAttributes) {
+    private publishSqs(event, sub, messageAttributes: MessageAttributes, sqsFifoAttributes: ISQSFifoAttributes) {
         console.log("🔥 publishSqs", { sqsFifoAttributes });
 
         const subEndpointUrl = new URL(sub.Endpoint);
@@ -283,16 +284,21 @@ export class SNSServer implements ISNSServer {
                 .sendMessage({
                     QueueUrl: sub.Endpoint,
                     MessageBody: event,
+                    MessageAttributes: formatMessageAttributes(messageAttributes),
+                    ...sqsFifoAttributes,
                 })
                 .promise();
         } else {
-            const records = JSON.parse(event).Records;
+            const parsedEvent = JSON.parse(event);
+            const records = parsedEvent.Records;
+
             if (records) {
                 const messagePromises = records.map((record) => {
                     return sqs
                         .sendMessage({
                             QueueUrl: sub.Endpoint,
                             MessageBody: JSON.stringify(record.Sns),
+                            MessageAttributes: formatMessageAttributes(messageAttributes),
                         })
                         .promise();
                 });
@@ -300,7 +306,8 @@ export class SNSServer implements ISNSServer {
             } else {
                 const sqsMsg: SQS.Types.SendMessageRequest = {
                     QueueUrl: sub.Endpoint,
-                    MessageBody: event,
+                    MessageBody: event.Message,
+                    MessageAttributes: formatMessageAttributes(messageAttributes),
                     ...sqsFifoAttributes,
                 };
                 console.log("🔥", { sqsMsg });
@@ -309,7 +316,7 @@ export class SNSServer implements ISNSServer {
         }
     }
 
-    public publish(topicArn, subject, message, messageStructure, messageAttributes, sqsFifoAttributes?: ISQSFifoAttributes) {
+    public publish(topicArn, subject, message, messageStructure, messageAttributes: MessageAttributes, sqsFifoAttributes?: ISQSFifoAttributes) {
         const messageId = createMessageId();
         Promise.all(
             this.subscriptions
@@ -338,7 +345,7 @@ export class SNSServer implements ISNSServer {
                         return this.publishHttp(event, sub, isRaw);
                     }
                     if (protocol === "sqs") {
-                        return this.publishSqs(event, sub, sqsFifoAttributes);
+                        return this.publishSqs(event, sub, messageAttributes, sqsFifoAttributes);
                     }
                     throw new Error(`Protocol '${protocol}' is not supported by serverless-offline-sns`);
                 }),
@@ -383,9 +390,4 @@ export class SNSServer implements ISNSServer {
         }
         this.pluginDebug(msg, "server");
     }
-}
-
-interface ISQSFifoAttributes {
-    MessageGroupId: string;
-    MessageDeduplicationId: string;
 }
