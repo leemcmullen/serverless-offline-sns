@@ -10,14 +10,16 @@ export function createAttr() {
 
 export function createMetadata() {
     return {
-        ResponseMetadata: [{
-            RequestId: uuid(),
-        }],
+        ResponseMetadata: [
+            {
+                RequestId: uuid(),
+            },
+        ],
     };
 }
 
 export function arrayify(obj) {
-    return Object.keys(obj).map(key => {
+    return Object.keys(obj).map((key) => {
         const x = {};
         x[key] = obj[key];
         return x;
@@ -30,16 +32,13 @@ export function parseMessageAttributes(body) {
     }
 
     const entries = Object.keys(body)
-        .filter(key => key.startsWith("MessageAttributes.entry"))
-        .reduce(
-            (prev, key) => {
-                const index = key.replace("MessageAttributes.entry.", "").match(/.*?(?=\.|$)/i)[0];
-                return prev.includes(index) ? prev : [...prev, index];
-            },
-            [],
-        );
+        .filter((key) => key.startsWith("MessageAttributes.entry"))
+        .reduce((prev, key) => {
+            const index = key.replace("MessageAttributes.entry.", "").match(/.*?(?=\.|$)/i)[0];
+            return prev.includes(index) ? prev : [...prev, index];
+        }, []);
     return entries
-        .map(index => `MessageAttributes.entry.${index}`)
+        .map((index) => `MessageAttributes.entry.${index}`)
         .reduce(
             (prev, baseKey) => ({
                 ...prev,
@@ -54,16 +53,13 @@ export function parseMessageAttributes(body) {
 
 export function parseAttributes(body) {
     const indices = Object.keys(body)
-        .filter(key => key.startsWith("Attributes.entry"))
-        .reduce(
-            (prev, key) => {
-                const index = key.replace("Attributes.entry.", "").match(/.*?(?=\.|$)/i)[0];
-                return prev.includes(index) ? prev : [...prev, index];
-            },
-            [],
-        );
+        .filter((key) => key.startsWith("Attributes.entry"))
+        .reduce((prev, key) => {
+            const index = key.replace("Attributes.entry.", "").match(/.*?(?=\.|$)/i)[0];
+            return prev.includes(index) ? prev : [...prev, index];
+        }, []);
     const attrs = {};
-    for (const key of indices.map(index => `Attributes.entry.${index}`)) {
+    for (const key of indices.map((index) => `Attributes.entry.${index}`)) {
         attrs[body[`${key}.key`]] = body[`${key}.value`];
     }
     return attrs;
@@ -94,21 +90,29 @@ export function createSnsLambdaEvent(topicArn, subscriptionArn, subject, message
     };
 }
 
-export function createSnsTopicEvent(topicArn, subscriptionArn, subject, message, messageId, messageStructure, messageAttributes?) {
-  return {
-      SignatureVersion: "1",
-      Timestamp: new Date().toISOString(),
-      Signature: "EXAMPLE",
-      SigningCertUrl: "EXAMPLE",
-      MessageId: messageId,
-      Message: message,
-      MessageStructure: messageStructure,
-      MessageAttributes: messageAttributes || {},
-      Type: "Notification",
-      UnsubscribeUrl: "EXAMPLE",
-      TopicArn: topicArn,
-      Subject: subject,
-  };
+export function createSnsTopicEvent(
+    topicArn,
+    subscriptionArn,
+    subject,
+    message,
+    messageId,
+    messageStructure,
+    messageAttributes?,
+) {
+    return {
+        SignatureVersion: "1",
+        Timestamp: new Date().toISOString(),
+        Signature: "EXAMPLE",
+        SigningCertUrl: "EXAMPLE",
+        MessageId: messageId,
+        Message: message,
+        MessageStructure: messageStructure,
+        MessageAttributes: messageAttributes || {},
+        Type: "Notification",
+        UnsubscribeUrl: "EXAMPLE",
+        TopicArn: topicArn,
+        Subject: subject,
+    };
 }
 
 export function createMessageId() {
@@ -126,9 +130,11 @@ export function validatePhoneNumber(phoneNumber) {
 
 // the topics name is that last part of the ARN:
 // arn:aws:sns:<REGION>:<ACCOUNT_ID>:<TOPIC_NAME>
-export const topicNameFromArn = arn => {
+export const topicNameFromArn = (arn) => {
     const arnParts = arn.split(":");
     return arnParts[arnParts.length - 1];
 };
 
 export const topicArnFromName = (name, region, accountId) => `arn:aws:sns:${region}:${accountId}:${name}`;
+
+export const nameof = <T>(name: keyof T) => name;

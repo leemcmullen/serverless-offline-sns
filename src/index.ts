@@ -28,8 +28,6 @@ class ServerlessOfflineSns {
     private accountId: string;
 
     constructor(serverless: any, options: any) {
-        console.log("🔥 ServerlessOfflineSns constructor");
-
         this.app = express();
         this.app.use(cors());
         this.app.use((req, res, next) => {
