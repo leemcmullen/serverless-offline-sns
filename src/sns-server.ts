@@ -306,7 +306,7 @@ export class SNSServer implements ISNSServer {
             } else {
                 const sqsMsg: SQS.Types.SendMessageRequest = {
                     QueueUrl: sub.Endpoint,
-                    MessageBody: event.Message,
+                    MessageBody: event,
                     MessageAttributes: formatMessageAttributes(messageAttributes),
                     ...sqsFifoAttributes,
                 };
